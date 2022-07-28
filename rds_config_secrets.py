@@ -6,4 +6,4 @@
 endpoint = 'mathapp.cp32ihh1pwgf.us-west-1.rds.amazonaws.com'
 username = 'admin'
 password = 'yfbQJnm65amq6d4U'
-db = 'user_information'
+db = 'darwin'

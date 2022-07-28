@@ -29,8 +29,8 @@ def lambda_handler(event, context):
     try:
         # insert a profile record, hard code OK: mostly invariant business logic
         sql_statement = f"""
-                    INSERT INTO {table} (name, email, subject, userName, region, userPoolId)
-                    VALUES ('{name}', '{email}', '{sub}', '{userName}', '{region}', '{userPoolId}');
+                    INSERT INTO {table} (id, name, email, subject, userName, region, userPoolId)
+                    VALUES ('{userName}', '{name}', '{email}', '{sub}', '{userName}', '{region}', '{userPoolId}');
         """
         pretty_print_sql(sql_statement, 'PUT NEW USER')
 
@@ -45,7 +45,7 @@ def lambda_handler(event, context):
 
     except pymysql.Error as e:
 
-        errorMsg = f"User Profile Create failedfor user {name} : {email}: {e.args[0]} {e.args[1]}"
+        errorMsg = f"User Profile Create failed for user {name} : {email}: {e.args[0]} {e.args[1]}"
         print(errorMsg)
 
     # for now, errors print to CloudWatch and return OK.
