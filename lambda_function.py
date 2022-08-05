@@ -5,7 +5,8 @@ from rds_config_secrets import *
 from classifier import varDump, pretty_print_sql
 
 # setup database access
-print('Lambda Cognito: attempting database connection...')
+print('Cognito Post User Confirmation Lambda Cold Start')
+
 connection = pymysql.connect(host = endpoint,
                              user = username,
                              password = password,
@@ -17,19 +18,26 @@ varDump(connection, 'Lambda Init: connection details')
 def lambda_handler(event, context):
 
     print('Lambda Invoked: Cognito Post User Confirmation Lambda')
-    table = "profiles"
+    sql_table = "profiles"
 
-    name = event['request']['userAttributes']['name']
-    email = event['request']['userAttributes']['email']
-    sub = event['request']['userAttributes']['sub']
-    userName = event['userName']
-    region = event['region']
-    userPoolId = event['userPoolId']
+    name = event.get('request', {}).get('userAttributes', {}).get('name')
+    email = event.get('request', {}).get('userAttributes', {}).get('email')
 
+    # userName is absolutely required for use in the database
+    userName = event.get('userName')
+    if userName == None:
+        errorMsg = f"User Profile Create failed for user {name}, {email}: {e.args[0]} {e.args[1]}"
+        print(errorMsg)
+        return
+
+    sub = event.get('request', {}).get('userAttributes', {}).get('sub')
+    region = event.get('region')
+    userPoolId = event.get('userPoolId')
+    
     try:
         # insert a profile record, hard code OK: mostly invariant business logic
         sql_statement = f"""
-                    INSERT INTO {table} (id, name, email, subject, userName, region, userPoolId)
+                    INSERT INTO {sql_table} (id, name, email, subject, userName, region, userPoolId)
                     VALUES ('{userName}', '{name}', '{email}', '{sub}', '{userName}', '{region}', '{userPoolId}');
         """
         pretty_print_sql(sql_statement, 'PUT NEW USER')
