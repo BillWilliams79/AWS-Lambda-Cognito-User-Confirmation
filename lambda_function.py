@@ -1,8 +1,13 @@
-import json
+import os
 import pymysql
-from rds_config_secrets import *
 
 from classifier import varDump, pretty_print_sql
+
+# retrieve db credential environment variables
+endpoint = os.environ['endpoint']
+username = os.environ['username']
+password = os.environ['db_password']
+db = os.environ['db_name']
 
 # setup database access
 print('Cognito Post User Confirmation Lambda Cold Start')
