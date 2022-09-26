@@ -1,4 +1,3 @@
-import json
 from lambda_function import lambda_handler
 from classifier import varDump
 
@@ -13,3 +12,5 @@ def lambda_cognito_test(config):
     context = config['context']
 
     return_value = lambda_handler(event, context)
+
+    print(return_value)

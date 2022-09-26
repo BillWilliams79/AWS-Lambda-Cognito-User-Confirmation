@@ -9,6 +9,8 @@ username = os.environ['username']
 password = os.environ['db_password']
 db = os.environ['db_name']
 
+#varDump({endpoint, username, password, db}, 'values read from environment variables')
+
 # setup database access
 print('Cognito Post User Confirmation Lambda Cold Start')
 
