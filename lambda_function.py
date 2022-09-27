@@ -29,6 +29,10 @@ def lambda_handler(event, context):
     # a message to a separate lambda to service the user data create request.
     # this is suitable for now.
 
+    # event handler only runs during actual confirmSignup, otherwise no action
+    if event.get('triggerSource') != 'PostConfirmation_ConfirmSignUp':
+        return event
+
     print('Lambda Invoked: Cognito Post User Confirmation Lambda')
     sql_table = "profiles"
 
