@@ -9,3 +9,4 @@
 .DS_Store*
 /_data_sample
 /exports.sh
+/_deploy_backups
