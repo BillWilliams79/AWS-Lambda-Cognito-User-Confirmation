@@ -69,12 +69,13 @@ def lambda_handler(event, context):
     try:
         sql_statement = f"""
                     INSERT INTO {sql_table} (id, name, email, subject, userName, region, userPoolId)
-                    VALUES ('{userName}', '{name}', '{email}', '{sub}', '{userName}', '{region}', '{userPoolId}');
+                    VALUES (%s, %s, %s, %s, %s, %s, %s);
         """
+        profile_params = (userName, name, email, sub, userName, region, userPoolId)
         pretty_print_sql(sql_statement, 'PUT NEW USER')
 
         with conn.cursor() as cursor:
-            affected_put_rows = cursor.execute(sql_statement)
+            affected_put_rows = cursor.execute(sql_statement, profile_params)
 
         if affected_put_rows > 0:
             conn.commit()
@@ -98,12 +99,13 @@ def lambda_handler(event, context):
 
         sql_statement = f"""
                     INSERT INTO {sql_table} (domain_name, creator_fk, closed)
-                    VALUES ('{domain_name}', '{userName}', '{closed}');
+                    VALUES (%s, %s, %s);
         """
+        domain_params = (domain_name, userName, closed)
         pretty_print_sql(sql_statement, 'CREATE NEW DOMAIN')
 
         with conn.cursor() as cursor:
-            affected_put_rows = cursor.execute(sql_statement)
+            affected_put_rows = cursor.execute(sql_statement, domain_params)
 
         if affected_put_rows > 0:
             conn.commit()
@@ -148,12 +150,13 @@ def lambda_handler(event, context):
 
         sql_statement = f"""
                     INSERT INTO {sql_table} (area_name, domain_fk, creator_fk, closed)
-                    VALUES ('{area_name}', '{domain_fk[0]}', '{userName}', '{closed}');
+                    VALUES (%s, %s, %s, %s);
         """
+        area_params = (area_name, domain_fk[0], userName, closed)
         pretty_print_sql(sql_statement, 'CREATE NEW AREA')
 
         with conn.cursor() as cursor:
-            affected_put_rows = cursor.execute(sql_statement)
+            affected_put_rows = cursor.execute(sql_statement, area_params)
 
         if affected_put_rows > 0:
             conn.commit()
@@ -198,12 +201,13 @@ def lambda_handler(event, context):
 
         sql_statement = f"""
                     INSERT INTO {sql_table} (priority, done, description, area_fk, creator_fk)
-                    VALUES ('{priority}', '{done}', '{description}', '{area_fk[0]}', '{userName}');
+                    VALUES (%s, %s, %s, %s, %s);
         """
-        pretty_print_sql(sql_statement, 'CREATE NEW AREA')
+        task_params = (priority, done, description, area_fk[0], userName)
+        pretty_print_sql(sql_statement, 'CREATE NEW TASK')
 
         with conn.cursor() as cursor:
-            affected_put_rows = cursor.execute(sql_statement)
+            affected_put_rows = cursor.execute(sql_statement, task_params)
 
         if affected_put_rows > 0:
             conn.commit()
