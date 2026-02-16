@@ -52,9 +52,10 @@ def test_duplicate_user_returns_error(invoke_cognito, test_user_name, db_connect
     assert 'failed' in result.lower() or 'duplicate' in result.lower()
 
 
-def test_missing_email_still_creates_profile(invoke_cognito, db_connection):
-    """Event with missing email attribute still creates profile (email can be None)."""
+def test_missing_email_returns_error(invoke_cognito, created_users, db_connection):
+    """Event with missing email attribute fails — profiles2.email is NOT NULL."""
     user_name = f"no-email-{uuid.uuid4().hex[:6]}"
+    created_users.append(user_name)
     event = build_cognito_event(
         user_name=user_name,
         name='No Email User',
@@ -65,18 +66,15 @@ def test_missing_email_still_creates_profile(invoke_cognito, db_connection):
 
     result = invoke_cognito(event)
 
-    # Cleanup
-    with db_connection.cursor() as cur:
-        cur.execute("DELETE FROM tasks2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM areas2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM domains2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM profiles2 WHERE id = %s", (user_name,))
-    db_connection.commit()
+    # Profile INSERT fails because email column is NOT NULL
+    assert isinstance(result, str)
+    assert 'failed' in result.lower() or 'null' in result.lower()
 
 
-def test_missing_name_still_creates_profile(invoke_cognito, db_connection):
-    """Event with missing name attribute still creates profile (name can be None)."""
+def test_missing_name_returns_error(invoke_cognito, created_users, db_connection):
+    """Event with missing name attribute fails — profiles2.name is NOT NULL."""
     user_name = f"no-name-{uuid.uuid4().hex[:6]}"
+    created_users.append(user_name)
     event = build_cognito_event(
         user_name=user_name,
         name='Test User',
@@ -87,18 +85,15 @@ def test_missing_name_still_creates_profile(invoke_cognito, db_connection):
 
     result = invoke_cognito(event)
 
-    # Cleanup
-    with db_connection.cursor() as cur:
-        cur.execute("DELETE FROM tasks2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM areas2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM domains2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM profiles2 WHERE id = %s", (user_name,))
-    db_connection.commit()
+    # Profile INSERT fails because name column is NOT NULL
+    assert isinstance(result, str)
+    assert 'failed' in result.lower() or 'null' in result.lower()
 
 
-def test_empty_request_returns_error(invoke_cognito, db_connection):
+def test_empty_request_returns_error(invoke_cognito, created_users, db_connection):
     """Event with empty request dict should handle gracefully."""
     user_name = f"empty-req-{uuid.uuid4().hex[:6]}"
+    created_users.append(user_name)
     event = {
         'version': '1',
         'region': 'us-west-1',
@@ -114,11 +109,3 @@ def test_empty_request_returns_error(invoke_cognito, db_connection):
         result = invoke_cognito(event)
     except Exception:
         pass  # Exception is acceptable for malformed input
-
-    # Cleanup any partial data
-    with db_connection.cursor() as cur:
-        cur.execute("DELETE FROM tasks2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM areas2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM domains2 WHERE creator_fk = %s", (user_name,))
-        cur.execute("DELETE FROM profiles2 WHERE id = %s", (user_name,))
-    db_connection.commit()
