@@ -1,6 +1,6 @@
 /url*
 /bin
-/__pycache__
+__pycache__/
 /pymyswl
 /PyMy*
 /python_date*
