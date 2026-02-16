@@ -10,6 +10,7 @@ names (profiles2, domains2, areas2, tasks2) before calling lambda_handler.
 """
 import sys
 import os
+import re
 import uuid
 import importlib
 from unittest.mock import patch
@@ -48,6 +49,12 @@ def db_connection():
 def test_user_name():
     """Unique userName for test isolation (acts as creator_fk/profile id)."""
     return f"cognito-test-{uuid.uuid4().hex[:8]}"
+
+
+@pytest.fixture(scope="session")
+def created_users():
+    """Track all user IDs created during the session for comprehensive cleanup."""
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -161,12 +168,11 @@ def invoke_cognito():
                 self._cursor = cursor
 
             def execute(self, sql, args=None):
-                # Rewrite table names (longest first to avoid partial matches)
+                # Rewrite production table names to darwin2 test equivalents
+                # Uses word-boundary regex to avoid partial matches and
+                # handle all positions (after FROM, INTO, JOIN, etc.)
                 for prod, test in self.TABLE_MAP.items():
-                    sql = sql.replace(f' {prod} ', f' {test} ')
-                    sql = sql.replace(f' {prod}\n', f' {test}\n')
-                    sql = sql.replace(f'INTO {prod} ', f'INTO {test} ')
-                    sql = sql.replace(f'INTO {prod}\n', f'INTO {test}\n')
+                    sql = re.sub(r'\b' + prod + r'\b', test, sql)
                 return self._cursor.execute(sql, args)
 
             def fetchone(self):
@@ -219,12 +225,20 @@ def invoke_cognito():
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_test_data(db_connection, test_user_name):
-    """Clean up all test data after session completes."""
+def cleanup_test_data(db_connection, test_user_name, created_users):
+    """Clean up all test data after session completes.
+
+    Deletes data for both the primary test_user_name and any additional
+    users tracked in the created_users list (from event type and edge
+    case tests that create users with dynamic UUIDs).
+    """
     yield
+    # Collect all user IDs to clean up
+    all_users = list(set([test_user_name] + created_users))
     with db_connection.cursor() as cur:
-        cur.execute("DELETE FROM tasks2 WHERE creator_fk = %s", (test_user_name,))
-        cur.execute("DELETE FROM areas2 WHERE creator_fk = %s", (test_user_name,))
-        cur.execute("DELETE FROM domains2 WHERE creator_fk = %s", (test_user_name,))
-        cur.execute("DELETE FROM profiles2 WHERE id = %s", (test_user_name,))
+        for user_id in all_users:
+            cur.execute("DELETE FROM tasks2 WHERE creator_fk = %s", (user_id,))
+            cur.execute("DELETE FROM areas2 WHERE creator_fk = %s", (user_id,))
+            cur.execute("DELETE FROM domains2 WHERE creator_fk = %s", (user_id,))
+            cur.execute("DELETE FROM profiles2 WHERE id = %s", (user_id,))
     db_connection.commit()
