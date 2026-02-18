@@ -29,7 +29,8 @@ def get_connection():
                 pass
             connection = None
     connection = pymysql.connect(
-        host=endpoint, user=username, password=password, database=db)
+        host=endpoint, user=username, password=password, database=db,
+        connect_timeout=3, read_timeout=5, write_timeout=5)
     return connection
 
 
@@ -98,10 +99,11 @@ def lambda_handler(event, context):
         closed = 0
 
         sql_statement = f"""
-                    INSERT INTO {sql_table} (domain_name, creator_fk, closed)
-                    VALUES (%s, %s, %s);
+                    INSERT INTO {sql_table} (domain_name, creator_fk, closed, sort_order)
+                    VALUES (%s, %s, %s, %s);
         """
-        domain_params = (domain_name, userName, closed)
+        sort_order = 0
+        domain_params = (domain_name, userName, closed, sort_order)
         pretty_print_sql(sql_statement, 'CREATE NEW DOMAIN')
 
         with conn.cursor() as cursor:
