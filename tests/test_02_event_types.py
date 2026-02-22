@@ -28,7 +28,7 @@ def test_forgot_password_is_noop(invoke_cognito, db_connection):
 
     # Verify NO profile was created
     with db_connection.cursor() as cur:
-        cur.execute("SELECT * FROM profiles2 WHERE id = %s", (user_name,))
+        cur.execute("SELECT * FROM profiles WHERE id = %s", (user_name,))
         assert cur.fetchone() is None
 
 
@@ -46,7 +46,7 @@ def test_unknown_trigger_is_noop(invoke_cognito, db_connection):
     assert isinstance(result, dict)
 
     with db_connection.cursor() as cur:
-        cur.execute("SELECT * FROM profiles2 WHERE id = %s", (user_name,))
+        cur.execute("SELECT * FROM profiles WHERE id = %s", (user_name,))
         assert cur.fetchone() is None
 
 
@@ -72,5 +72,5 @@ def test_missing_trigger_source_is_noop(invoke_cognito, db_connection):
     assert isinstance(result, dict)
 
     with db_connection.cursor() as cur:
-        cur.execute("SELECT * FROM profiles2 WHERE id = %s", (user_name,))
+        cur.execute("SELECT * FROM profiles WHERE id = %s", (user_name,))
         assert cur.fetchone() is None

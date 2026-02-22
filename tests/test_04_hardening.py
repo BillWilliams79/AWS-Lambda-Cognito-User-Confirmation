@@ -20,7 +20,7 @@ def test_profile_fields_complete(invoke_cognito, test_user_name, db_connection):
     with db_connection.cursor() as cur:
         cur.execute(
             "SELECT id, name, email, subject, userName, region, userPoolId "
-            "FROM profiles2 WHERE id = %s",
+            "FROM profiles WHERE id = %s",
             (test_user_name,),
         )
         profile = cur.fetchone()
@@ -41,11 +41,11 @@ def test_duplicate_signup_no_orphans(invoke_cognito, test_user_name, db_connecti
     """
     # Count existing records before duplicate attempt
     with db_connection.cursor() as cur:
-        cur.execute("SELECT COUNT(*) AS cnt FROM domains2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM domains WHERE creator_fk = %s", (test_user_name,))
         domains_before = cur.fetchone()['cnt']
-        cur.execute("SELECT COUNT(*) AS cnt FROM areas2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM areas WHERE creator_fk = %s", (test_user_name,))
         areas_before = cur.fetchone()['cnt']
-        cur.execute("SELECT COUNT(*) AS cnt FROM tasks2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM tasks WHERE creator_fk = %s", (test_user_name,))
         tasks_before = cur.fetchone()['cnt']
 
     # Attempt duplicate signup
@@ -61,11 +61,11 @@ def test_duplicate_signup_no_orphans(invoke_cognito, test_user_name, db_connecti
 
     # Verify no new records were created (no orphans)
     with db_connection.cursor() as cur:
-        cur.execute("SELECT COUNT(*) AS cnt FROM domains2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM domains WHERE creator_fk = %s", (test_user_name,))
         assert cur.fetchone()['cnt'] == domains_before
-        cur.execute("SELECT COUNT(*) AS cnt FROM areas2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM areas WHERE creator_fk = %s", (test_user_name,))
         assert cur.fetchone()['cnt'] == areas_before
-        cur.execute("SELECT COUNT(*) AS cnt FROM tasks2 WHERE creator_fk = %s", (test_user_name,))
+        cur.execute("SELECT COUNT(*) AS cnt FROM tasks WHERE creator_fk = %s", (test_user_name,))
         assert cur.fetchone()['cnt'] == tasks_before
 
 
@@ -89,7 +89,7 @@ def test_signup_with_special_chars_in_name(invoke_cognito, created_users, db_con
 
     # Verify the name was stored correctly
     with db_connection.cursor() as cur:
-        cur.execute("SELECT name FROM profiles2 WHERE id = %s", (user_name,))
+        cur.execute("SELECT name FROM profiles WHERE id = %s", (user_name,))
         profile = cur.fetchone()
 
     assert profile is not None
@@ -105,7 +105,7 @@ def test_provisioned_task_content(invoke_cognito, test_user_name, db_connection)
     with db_connection.cursor() as cur:
         cur.execute(
             "SELECT t.description, t.priority, t.done, a.area_name "
-            "FROM tasks2 t JOIN areas2 a ON t.area_fk = a.id "
+            "FROM tasks t JOIN areas a ON t.area_fk = a.id "
             "WHERE t.creator_fk = %s",
             (test_user_name,),
         )
@@ -141,5 +141,5 @@ def test_connection_reuse_across_invocations(invoke_cognito, created_users, db_c
 
     # Both users should have profiles
     with db_connection.cursor() as cur:
-        cur.execute("SELECT COUNT(*) AS cnt FROM profiles2 WHERE id IN (%s, %s)", (user1, user2))
+        cur.execute("SELECT COUNT(*) AS cnt FROM profiles WHERE id IN (%s, %s)", (user1, user2))
         assert cur.fetchone()['cnt'] == 2

@@ -4,7 +4,7 @@ Test the full Cognito post-confirmation signup provisioning flow.
 Verifies that lambda_handler creates: profile → domain → area → task
 when triggered by PostConfirmation_ConfirmSignUp.
 
-All tests use darwin2 via patched table names.
+All tests use darwin_dev via patched table names.
 """
 import json
 
@@ -26,9 +26,9 @@ def test_signup_creates_profile(invoke_cognito, test_user_name, db_connection):
     assert isinstance(result, dict)
     assert result.get('triggerSource') == 'PostConfirmation_ConfirmSignUp'
 
-    # Verify profile was created in darwin2
+    # Verify profile was created in darwin_dev
     with db_connection.cursor() as cur:
-        cur.execute("SELECT * FROM profiles2 WHERE id = %s", (test_user_name,))
+        cur.execute("SELECT * FROM profiles WHERE id = %s", (test_user_name,))
         profile = cur.fetchone()
 
     assert profile is not None
@@ -41,7 +41,7 @@ def test_signup_creates_domain(invoke_cognito, test_user_name, db_connection):
     """PostConfirmation creates a 'Personal' domain for the user."""
     with db_connection.cursor() as cur:
         cur.execute(
-            "SELECT * FROM domains2 WHERE creator_fk = %s",
+            "SELECT * FROM domains WHERE creator_fk = %s",
             (test_user_name,),
         )
         domains = cur.fetchall()
@@ -56,7 +56,7 @@ def test_signup_creates_area(invoke_cognito, test_user_name, db_connection):
     """PostConfirmation creates a 'Home' area under the Personal domain."""
     with db_connection.cursor() as cur:
         cur.execute(
-            "SELECT * FROM areas2 WHERE creator_fk = %s",
+            "SELECT * FROM areas WHERE creator_fk = %s",
             (test_user_name,),
         )
         areas = cur.fetchall()
@@ -71,7 +71,7 @@ def test_signup_creates_task(invoke_cognito, test_user_name, db_connection):
     """PostConfirmation creates an instructional task in the Home area."""
     with db_connection.cursor() as cur:
         cur.execute(
-            "SELECT * FROM tasks2 WHERE creator_fk = %s",
+            "SELECT * FROM tasks WHERE creator_fk = %s",
             (test_user_name,),
         )
         tasks = cur.fetchall()
@@ -90,10 +90,10 @@ def test_signup_full_hierarchy_linked(invoke_cognito, test_user_name, db_connect
         # Join task → area → domain → profile
         cur.execute(
             "SELECT t.description, a.area_name, d.domain_name, p.name "
-            "FROM tasks2 t "
-            "JOIN areas2 a ON t.area_fk = a.id "
-            "JOIN domains2 d ON a.domain_fk = d.id "
-            "JOIN profiles2 p ON d.creator_fk = p.id "
+            "FROM tasks t "
+            "JOIN areas a ON t.area_fk = a.id "
+            "JOIN domains d ON a.domain_fk = d.id "
+            "JOIN profiles p ON d.creator_fk = p.id "
             "WHERE p.id = %s",
             (test_user_name,),
         )
