@@ -2,7 +2,7 @@
 Test edge cases and error handling in the Cognito post-confirmation lambda.
 
 Tests missing fields, duplicate users, and malformed events.
-All tests use darwin2 via patched table names.
+All tests use darwin_dev via patched table names.
 """
 import uuid
 
@@ -29,7 +29,7 @@ def test_missing_username_returns_error(invoke_cognito, db_connection):
 
     # No profile should be created
     with db_connection.cursor() as cur:
-        cur.execute("SELECT * FROM profiles2 WHERE id IS NULL OR id = ''")
+        cur.execute("SELECT * FROM profiles WHERE id IS NULL OR id = ''")
         assert cur.fetchone() is None
 
 
@@ -53,7 +53,7 @@ def test_duplicate_user_returns_error(invoke_cognito, test_user_name, db_connect
 
 
 def test_missing_email_returns_error(invoke_cognito, created_users, db_connection):
-    """Event with missing email attribute fails — profiles2.email is NOT NULL."""
+    """Event with missing email attribute fails — profiles.email is NOT NULL."""
     user_name = f"no-email-{uuid.uuid4().hex[:6]}"
     created_users.append(user_name)
     event = build_cognito_event(
@@ -72,7 +72,7 @@ def test_missing_email_returns_error(invoke_cognito, created_users, db_connectio
 
 
 def test_missing_name_returns_error(invoke_cognito, created_users, db_connection):
-    """Event with missing name attribute fails — profiles2.name is NOT NULL."""
+    """Event with missing name attribute fails — profiles.name is NOT NULL."""
     user_name = f"no-name-{uuid.uuid4().hex[:6]}"
     created_users.append(user_name)
     event = build_cognito_event(
