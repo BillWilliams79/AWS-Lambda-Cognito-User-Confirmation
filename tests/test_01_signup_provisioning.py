@@ -34,7 +34,7 @@ def test_signup_creates_profile(invoke_cognito, test_user_name, db_connection):
     assert profile is not None
     assert profile['name'] == 'Provisioning Test User'
     assert profile['email'] == 'provision@test.com'
-    assert profile['userName'] == test_user_name
+    assert profile['id'] == test_user_name
 
 
 def test_signup_creates_domain(invoke_cognito, test_user_name, db_connection):

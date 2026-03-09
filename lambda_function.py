@@ -62,17 +62,13 @@ def lambda_handler(event, context):
         print(error_message)
         return error_message
 
-    sub = event.get('request', {}).get('userAttributes', {}).get('sub')
-    region = event.get('region')
-    userPoolId = event.get('userPoolId')
-
     # STEP 2 => create user profile
     try:
         sql_statement = f"""
-                    INSERT INTO {sql_table} (id, name, email, subject, userName, region, userPoolId)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s);
+                    INSERT INTO {sql_table} (id, name, email)
+                    VALUES (%s, %s, %s);
         """
-        profile_params = (userName, name, email, sub, userName, region, userPoolId)
+        profile_params = (userName, name, email)
         pretty_print_sql(sql_statement, 'PUT NEW USER')
 
         with conn.cursor() as cursor:
