@@ -62,15 +62,12 @@ def build_cognito_event(
     trigger_source='PostConfirmation_ConfirmSignUp',
     name='Test User',
     email='test@test.com',
-    sub=None,
-    region='us-west-1',
-    user_pool_id='us-west-1_testpool',
 ):
     """Build a Cognito PostConfirmation event dict."""
     return {
         'version': '1',
-        'region': region,
-        'userPoolId': user_pool_id,
+        'region': 'us-west-1',
+        'userPoolId': 'us-west-1_testpool',
         'userName': user_name,
         'callerContext': {
             'awsSdkVersion': 'aws-sdk-unknown-unknown',
@@ -79,7 +76,7 @@ def build_cognito_event(
         'triggerSource': trigger_source,
         'request': {
             'userAttributes': {
-                'sub': sub or user_name,
+                'sub': user_name,
                 'email_verified': 'true',
                 'cognito:user_status': 'CONFIRMED',
                 'cognito:email_alias': email,

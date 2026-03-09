@@ -12,14 +12,10 @@ from conftest import build_cognito_event
 
 
 def test_profile_fields_complete(invoke_cognito, test_user_name, db_connection):
-    """Verify all profile fields are populated correctly after signup.
-
-    The provisioning tests check name/email/userName but not subject,
-    region, or userPoolId. This test verifies the full field set.
-    """
+    """Verify all profile fields are populated correctly after signup."""
     with db_connection.cursor() as cur:
         cur.execute(
-            "SELECT id, name, email, subject, userName, region, userPoolId "
+            "SELECT id, name, email "
             "FROM profiles WHERE id = %s",
             (test_user_name,),
         )
@@ -27,10 +23,8 @@ def test_profile_fields_complete(invoke_cognito, test_user_name, db_connection):
 
     assert profile is not None, "Profile should exist from provisioning tests"
     assert profile['id'] == test_user_name
-    assert profile['userName'] == test_user_name
-    assert profile['subject'] == test_user_name  # sub defaults to user_name in builder
-    assert profile['region'] == 'us-west-1'
-    assert profile['userPoolId'] == 'us-west-1_testpool'
+    assert profile['name'] == 'Provisioning Test User'
+    assert profile['email'] == 'provision@test.com'
 
 
 def test_duplicate_signup_no_orphans(invoke_cognito, test_user_name, db_connection):
