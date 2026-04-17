@@ -12,7 +12,7 @@ Cognito User Pool -> PostConfirmation_ConfirmSignUp -> Lambda -> RDS MySQL
 
 ### Data Provisioning Sequence (lambda_function.py)
 1. Validate trigger source (only `PostConfirmation_ConfirmSignUp`)
-2. Extract user attributes from Cognito event (name, email, userName, sub, region, userPoolId)
+2. Extract user attributes from Cognito event (name, email, userName)
 3. INSERT into `profiles` table (critical - failure returns error)
 4. INSERT into `domains` table ("Personal" domain)
 5. Retrieve domain ID via `LAST_INSERT_ID()`
@@ -26,7 +26,7 @@ Cognito User Pool -> PostConfirmation_ConfirmSignUp -> Lambda -> RDS MySQL
 - Domain/Area/Task failures: logs warning, returns event (signup succeeds with partial data)
 
 ### Database Schema (referenced tables)
-- `profiles` - id, name, email, subject, userName, region, userPoolId
+- `profiles` - id, name, email (NOT-NULL columns without defaults; other columns use schema defaults)
 - `domains` - domain_name, creator_fk, closed
 - `areas` - area_name, domain_fk, creator_fk, closed
 - `tasks` - priority, done, description, area_fk, creator_fk
