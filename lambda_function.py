@@ -14,12 +14,24 @@ db = os.environ['db_name']
 # setup database access
 print('Cognito Post User Confirmation Lambda Cold Start')
 
-connection = pymysql.connect(host = endpoint,
-                             user = username,
-                             password = password,
-                             database = db,)
+connection = None
 
-varDump(connection, 'Lambda Init: connection details')
+def get_connection():
+    global connection
+    if connection is not None:
+        try:
+            connection.ping(reconnect=True)
+            return connection
+        except pymysql.MySQLError:
+            try:
+                connection.close()
+            except Exception:
+                pass
+            connection = None
+    connection = pymysql.connect(
+        host=endpoint, user=username, password=password, database=db,
+        connect_timeout=3, read_timeout=5, write_timeout=5)
+    return connection
 
 
 def lambda_handler(event, context):
@@ -34,6 +46,7 @@ def lambda_handler(event, context):
         return event
 
     print('Lambda Invoked: Cognito Post User Confirmation Lambda')
+    conn = get_connection()
     sql_table = "profiles"
 
 
@@ -53,15 +66,16 @@ def lambda_handler(event, context):
     try:
         sql_statement = f"""
                     INSERT INTO {sql_table} (id, name, email)
-                    VALUES ('{userName}', '{name}', '{email}');
+                    VALUES (%s, %s, %s);
         """
+        profile_params = (userName, name, email)
         pretty_print_sql(sql_statement, 'PUT NEW USER')
 
-        cursor = connection.cursor()
-        affected_put_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_put_rows = cursor.execute(sql_statement, profile_params)
 
         if affected_put_rows > 0:
-            connection.commit()
+            conn.commit()
         else:
             # profile must be created, otherwise user is invalid in the App
             error_message = f"User Profile Create failed for user {name} : {email}. Zero affected rows returned."
@@ -81,16 +95,18 @@ def lambda_handler(event, context):
         closed = 0
 
         sql_statement = f"""
-                    INSERT INTO {sql_table} (domain_name, creator_fk, closed)
-                    VALUES ('{domain_name}', '{userName}', '{closed}');
+                    INSERT INTO {sql_table} (domain_name, creator_fk, closed, sort_order)
+                    VALUES (%s, %s, %s, %s);
         """
+        sort_order = 0
+        domain_params = (domain_name, userName, closed, sort_order)
         pretty_print_sql(sql_statement, 'CREATE NEW DOMAIN')
 
-        cursor = connection.cursor()
-        affected_put_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_put_rows = cursor.execute(sql_statement, domain_params)
 
         if affected_put_rows > 0:
-            connection.commit()
+            conn.commit()
         else:
             # print message and exit successs back to Cognito. User created, but default data wasn't which is OK
             error_message = f"Warning: Domain Create failed for user {name} : {email}. Zero affected rows returned."
@@ -108,14 +124,15 @@ def lambda_handler(event, context):
     try:
         # mySql syntax to retrieve ID of prior insert in this session
         sql_statement= f"""SELECT LAST_INSERT_ID()"""
-        affected_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_rows = cursor.execute(sql_statement)
 
-        if affected_rows > 0:
-            domain_fk = cursor.fetchone()
-        else:
-            # Without new domain Id, creation of user data cannot continue
-            print(f"Warning: failed to read last_insert_id for created domain.")
-            return event
+            if affected_rows > 0:
+                domain_fk = cursor.fetchone()
+            else:
+                # Without new domain Id, creation of user data cannot continue
+                print(f"Warning: failed to read last_insert_id for created domain.")
+                return event
 
     except pymysql.Error as e:
         # Without new domain Id, creation of user data cannot continue
@@ -131,15 +148,16 @@ def lambda_handler(event, context):
 
         sql_statement = f"""
                     INSERT INTO {sql_table} (area_name, domain_fk, creator_fk, closed)
-                    VALUES ('{area_name}', '{domain_fk[0]}', '{userName}', '{closed}');
+                    VALUES (%s, %s, %s, %s);
         """
+        area_params = (area_name, domain_fk[0], userName, closed)
         pretty_print_sql(sql_statement, 'CREATE NEW AREA')
 
-        cursor = connection.cursor()
-        affected_put_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_put_rows = cursor.execute(sql_statement, area_params)
 
         if affected_put_rows > 0:
-            connection.commit()
+            conn.commit()
         else:
             # print message and exit successs back to Cognito. User created, but default data wasn't which is OK
             error_message = f"Warning: Area Create failed for user {name} : {email}. Zero affected rows returned."
@@ -156,14 +174,15 @@ def lambda_handler(event, context):
     try:
         # mySql syntax to retrieve ID of prior insert in this session
         sql_statement= f"""SELECT LAST_INSERT_ID()"""
-        affected_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_rows = cursor.execute(sql_statement)
 
-        if affected_rows > 0:
-            area_fk = cursor.fetchone()
-        else:
-            # Without new area Id, creation of user data cannot continue
-            print(f"Warning: failed to read last_insert_id for created area.")
-            return event
+            if affected_rows > 0:
+                area_fk = cursor.fetchone()
+            else:
+                # Without new area Id, creation of user data cannot continue
+                print(f"Warning: failed to read last_insert_id for created area.")
+                return event
 
     except pymysql.Error as e:
         # Without new area Id, creation of user data cannot continue
@@ -180,15 +199,16 @@ def lambda_handler(event, context):
 
         sql_statement = f"""
                     INSERT INTO {sql_table} (priority, done, description, area_fk, creator_fk)
-                    VALUES ('{priority}', '{done}', '{description}', '{area_fk[0]}', '{userName}');
+                    VALUES (%s, %s, %s, %s, %s);
         """
-        pretty_print_sql(sql_statement, 'CREATE NEW AREA')
+        task_params = (priority, done, description, area_fk[0], userName)
+        pretty_print_sql(sql_statement, 'CREATE NEW TASK')
 
-        cursor = connection.cursor()
-        affected_put_rows = cursor.execute(sql_statement)
+        with conn.cursor() as cursor:
+            affected_put_rows = cursor.execute(sql_statement, task_params)
 
         if affected_put_rows > 0:
-            connection.commit()
+            conn.commit()
         else:
             # print message and exit successs back to Cognito. User created, but default data wasn't which is OK
             error_message = f"Warning: Task create failed for user {name} : {email}. Zero affected rows returned."
