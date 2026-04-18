@@ -47,7 +47,6 @@ def lambda_handler(event, context):
 
     print('Lambda Invoked: Cognito Post User Confirmation Lambda')
     conn = get_connection()
-    sql_table = "profiles"
 
 
     # STEP 1 => process Cognito event to retrieve user information
@@ -64,8 +63,8 @@ def lambda_handler(event, context):
 
     # STEP 2 => create user profile
     try:
-        sql_statement = f"""
-                    INSERT INTO {sql_table} (id, name, email)
+        sql_statement = """
+                    INSERT INTO profiles (id, name, email)
                     VALUES (%s, %s, %s);
         """
         profile_params = (userName, name, email)
@@ -90,12 +89,11 @@ def lambda_handler(event, context):
 
     # STEP 3a => Create initial Domain record for the user.
     try:
-        sql_table = 'domains'
         domain_name = 'Personal'
         closed = 0
 
-        sql_statement = f"""
-                    INSERT INTO {sql_table} (domain_name, creator_fk, closed, sort_order)
+        sql_statement = """
+                    INSERT INTO domains (domain_name, creator_fk, closed, sort_order)
                     VALUES (%s, %s, %s, %s);
         """
         sort_order = 0
@@ -123,7 +121,7 @@ def lambda_handler(event, context):
     # STEP 3b => retrieve ID of the initial domain for use in STEP 4
     try:
         # mySql syntax to retrieve ID of prior insert in this session
-        sql_statement= f"""SELECT LAST_INSERT_ID()"""
+        sql_statement = "SELECT LAST_INSERT_ID()"
         with conn.cursor() as cursor:
             affected_rows = cursor.execute(sql_statement)
 
@@ -142,12 +140,11 @@ def lambda_handler(event, context):
 
     # STEP 4 => Create initial Area for the user
     try:
-        sql_table = 'areas'
         area_name = 'Home'
         closed = 0
 
-        sql_statement = f"""
-                    INSERT INTO {sql_table} (area_name, domain_fk, creator_fk, closed)
+        sql_statement = """
+                    INSERT INTO areas (area_name, domain_fk, creator_fk, closed)
                     VALUES (%s, %s, %s, %s);
         """
         area_params = (area_name, domain_fk[0], userName, closed)
@@ -173,7 +170,7 @@ def lambda_handler(event, context):
     # STEP 4b => retrieve ID of the initial area for use in STEP 5
     try:
         # mySql syntax to retrieve ID of prior insert in this session
-        sql_statement= f"""SELECT LAST_INSERT_ID()"""
+        sql_statement = "SELECT LAST_INSERT_ID()"
         with conn.cursor() as cursor:
             affected_rows = cursor.execute(sql_statement)
 
@@ -192,13 +189,12 @@ def lambda_handler(event, context):
 
     # STEP 5 => Create initial Task for the user
     try:
-        sql_table = 'tasks'
         priority = 1
         done = 0
         description = 'Tasks are organized in two levels: Domains and Areas. On the Plan page, Domains correspond to the tabs, areas to the cards. All tasks are stored in an Area and sorted by priority. When completed, tasks show up in the calendar view.'
 
-        sql_statement = f"""
-                    INSERT INTO {sql_table} (priority, done, description, area_fk, creator_fk)
+        sql_statement = """
+                    INSERT INTO tasks (priority, done, description, area_fk, creator_fk)
                     VALUES (%s, %s, %s, %s, %s);
         """
         task_params = (priority, done, description, area_fk[0], userName)

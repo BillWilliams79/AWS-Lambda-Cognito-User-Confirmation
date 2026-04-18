@@ -52,9 +52,6 @@ Cognito User Pool -> PostConfirmation_ConfirmSignUp -> Lambda -> RDS MySQL
 
 ## Known Issues
 
-### Critical: SQL Injection Vulnerability
-All SQL in `lambda_function.py` uses f-string interpolation with user-supplied values. Must migrate to parameterized queries (`cursor.execute(sql, params)`).
-
 ### Critical: Stale Database Connection
 Connection is created at module scope (cold start) with no reconnection logic. RDS idle timeout or failover will break all subsequent invocations.
 
