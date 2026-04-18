@@ -9,8 +9,6 @@ username = os.environ['username']
 password = os.environ['db_password']
 db = os.environ['db_name']
 
-#varDump({endpoint, username, password, db}, 'values read from environment variables')
-
 # setup database access
 print('Cognito Post User Confirmation Lambda Cold Start')
 
@@ -57,7 +55,7 @@ def lambda_handler(event, context):
     userName = event.get('userName')
 
     if userName == None:
-        error_message = f"Username data unavaible from Cognito for user: {name}, {email}"
+        error_message = f"Username data unavailable from Cognito for user: {name}, {email}"
         print(error_message)
         return error_message
 

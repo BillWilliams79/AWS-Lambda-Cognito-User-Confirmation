@@ -55,16 +55,6 @@ Cognito User Pool -> PostConfirmation_ConfirmSignUp -> Lambda -> RDS MySQL
 ### Critical: Stale Database Connection
 Connection is created at module scope (cold start) with no reconnection logic. RDS idle timeout or failover will break all subsequent invocations.
 
-### Bugs
-- `rest_api_utils.py:16` - `isBase64Encoded` is string `'false'` instead of boolean `False`
-- `rest_api_utils.py:25,33` - Status code compared as string but cast to int; error body double-JSON-encoded
-- `lambda_function.py:48` - Typo: "unavaible" -> "unavailable"
-- `lambda_function.py:189` - Log label says "CREATE NEW AREA" but this is the task INSERT
-- `lambda_function.py:12` (commented out) - `{endpoint, username, password, db}` is a set, not dict
-- `lambda_function.py:89,138,187` - Integer columns (closed, priority, done) quoted as strings in SQL
-- `.gitignore:4` - `/pymyswl` is a typo for `/pymysql`
-- `lambda_test_runner.py:22` - Typo: "Postive" -> "Positive"
-
 ## Development Notes
 
 ### Local Testing
