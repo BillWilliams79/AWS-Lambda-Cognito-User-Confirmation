@@ -1,7 +1,7 @@
 /url*
 /bin
 __pycache__/
-/pymyswl
+/pymysql
 /PyMy*
 /python_date*
 /*.zip
